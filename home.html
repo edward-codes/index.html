@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* CSS Variables for a modern, easily changeable theme */
+        :root {
+            --primary-color: #004080;
+            --secondary-color: #005a9c;
+            --bg-color: #f0f4f8;
+            --surface-color: #ffffff;
+            --text-color: #333333;
+            --light-text-color: #ffffff;
+            --danger-color: #e74c3c;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --gradient-bg: linear-gradient(135deg, #004d99, #003366);
+            --overlay-color: rgba(255, 255, 255, 0.7);
+        }
+
+        .dark-mode {
+            --primary-color: #2196F3;
+            --secondary-color: #0d47a1;
+            --bg-color: #1a1a2e;
+            --surface-color: #2c2c4d;
+            --text-color: #e0e0e0;
+            --light-text-color: #ffffff;
+            --danger-color: #e74c3c;
+            --shadow-color: rgba(255, 255, 255, 0.1);
+            --gradient-bg: linear-gradient(135deg, #1f1f3a, #1a1a2e);
+            --overlay-color: rgba(0, 0, 0, 0.7);
+        }
+        /* Kwa screen kubwa (desktop) */
+body {
+  font-size: 18px;
+  margin: 20px;
+}
+
+/* Kwa simu (screen ndogo) */
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+    margin: 10px;
+  }
+
+  .container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  img {
+    width: 100%;
+    height: auto;
+  }
+}
+
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            transition: background 0.5s ease, color 0.5s ease;
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            background-image: url('https://i.imgur.com/your-vanmo-truck-image.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--overlay-color);
+            z-index: -1;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--gradient-bg);
+            color: var(--light-text-color);
+            padding: 15px 5vw;
+            /* Use vw for mobile padding */
+            box-shadow: 0 4px 12px var(--shadow-color);
+            position: sticky;
+            /* Keep header visible */
+            top: 0;
+            z-index: 998;
+        }
+
+        .logout-btn {
+            color: var(--light-text-color);
+            text-decoration: none;
+            background: var(--danger-color);
+            padding: 0.6rem 1.2rem;
+            /* Use rem for scalable buttons */
+            border-radius: 50px;
+            font-weight: 600;
+            transition: background 0.3s ease, transform 0.3s ease;
+            white-space: nowrap;
+            /* Prevent breaking on small screens */
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            background-color: var(--secondary-color);
+            overflow-x: hidden;
+            transition: width 0.4s ease, box-shadow 0.4s ease;
+            padding-top: 80px;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-mode .sidebar {
+            box-shadow: 4px 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar a {
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 1.1em;
+            color: var(--light-text-color);
+            display: block;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .sidebar a:hover {
+            background: rgba(0, 0, 0, 0.2);
+            transform: translateX(5px);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2.5em;
+            background: none;
+            border: none;
+            color: var(--light-text-color);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .close-btn:hover {
+            transform: rotate(90deg);
+        }
+
+        .open-btn {
+            font-size: 1.2em;
+            background: var(--primary-color);
+            color: var(--light-text-color);
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            border-radius: 50px;
+            box-shadow: 0 4px 10px var(--shadow-color);
+            transition: background 0.3s ease, transform 0.3s ease;
+            margin-right: 20px;
+            /* Space between the button and other elements */
+        }
+
+        .open-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .content {
+            margin: 20px 5vw;
+            /* Use vw for mobile margin */
+            padding: 30px;
+            background: var(--surface-color);
+            border-radius: 15px;
+            box-shadow: 0 8px 25px var(--shadow-color);
+            min-height: 70vh;
+            max-width: 1200px;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-in-out forwards;
+        }
+
+        /* Responsive Content Margin for larger screens */
+        @media (min-width: 1240px) {
+            .content {
+                margin: 20px auto;
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .back-btn,
+        .delete-selected-btn,
+        .download-btn,
+        .delete-btn {
+            /* General styling for action buttons */
+            font-size: 1em;
+            /* Ensure consistent text size */
+            padding: 0.7rem 1.4rem;
+            border-radius: 50px;
+            text-align: center;
+        }
+
+        .back-btn {
+            background: var(--primary-color);
+            color: var(--light-text-color);
+            border: none;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-weight: 600;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        /* Card Styles */
+        .card-section {
+            margin-top: 50px;
+            text-align: center;
+        }
+
+        .card-section h2 {
+            font-size: 1.8em;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+        }
+        .container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            /* Reduced gap slightly for mobile */
+            justify-content: center;
+        }
+
+        .card {
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            /* Updated flex properties for better wrapping */
+            flex: 1 1 300px;
+            max-width: 380px;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .dark-mode .card {
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.05);
+        }
+
+        .card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-mode .card:hover {
+            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.1);
+        }
+
+        .card h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .card p {
+            font-size: 0.9em;
+        }
+
+        /* File List Styles */
+        .content-section {
+            padding: 30px;
+            background: var(--surface-color);
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .file-list,
+        .comments-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .file-list li,
+        .comments-list li {
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            /* Stack content vertically on mobile */
+            justify-content: space-between;
+            align-items: flex-start;
+            /* Align to the start when stacked */
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+
+        /* Desktop/Tablet view for list items */
+        @media (min-width: 600px) {
+            .file-list li,
+            .comments-list li {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+
+        /* New request list styling to accommodate checkbox and text */
+        #requests-list li>div:first-child {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-grow: 1;
+            margin-bottom: 10px;
+            /* Space between text/checkbox and buttons on mobile */
+        }
+
+        @media (min-width: 600px) {
+            #requests-list li>div:first-child {
+                margin-bottom: 0;
+            }
+        }
+
+
+        #requests-list li input[type="checkbox"] {
+            width: auto;
+            margin-top: 0;
+            min-width: 20px;
+            /* Ensure checkbox is easily clickable */
+            min-height: 20px;
+        }
+
+        .file-list li:hover,
+        .comments-list li:hover {
+            background: #e1e8f0;
+            transform: translateX(5px);
+        }
+
+        .dark-mode .file-list li,
+        .dark-mode .comments-list li {
+            background: #3c3c5a;
+        }
+
+        .dark-mode .file-list li:hover,
+        .dark-mode .comments-list li:hover {
+            background: #4a4a6b;
+        }
+
+        .file-list li>div:last-child {
+            /* Wrapper for download/delete buttons to keep them together */
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .file-list .download-btn {
+            color: white;
+            border: none;
+            background: #007bff;
+        }
+
+        /* Styles for the individual delete button on comments and requests */
+        .comments-list .delete-btn {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease;
+            margin-left: 0;
+            /* Remove existing margin for mobile */
+            margin-top: 10px;
+            /* Add top margin for mobile stack */
+        }
+
+        @media (min-width: 600px) {
+            .comments-list .delete-btn {
+                margin-left: 20px;
+                /* Restore margin for desktop */
+                margin-top: 0;
+            }
+        }
+
+        .file-list .download-btn:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .comments-list .delete-btn:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+
+        /* Style for the bulk delete button */
+        .delete-selected-btn {
+            background: var(--danger-color);
+            color: var(--light-text-color);
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: 600;
+            transition: background 0.3s ease, transform 0.3s ease;
+            display: block;
+            /* Make it a block element on small screens */
+            width: 100%;
+            /* Full width on small screens */
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 600px) {
+            .delete-selected-btn {
+                width: auto;
+                /* Auto width on desktop */
+                display: inline-block;
+            }
+        }
+
+
+        .delete-selected-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+
+        /* Loading Spinner */
+        .loader {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        .dark-mode .loader {
+            border-left-color: var(--light-text-color);
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Theme Toggle */
+        .theme-options {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .theme-toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .theme-toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Comment Section Styles */
+        .comment-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .comment-form textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            resize: vertical;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .comment-form button {
+            padding: 0.7rem 1.4rem;
+            border: none;
+            background: var(--primary-color);
+            color: var(--light-text-color);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 100%;
+            /* Full width on small screens */
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 600px) {
+            .comment-form button {
+                width: auto;
+                align-self: flex-start;
+            }
+        }
+
+
+        .comment-form button:hover {
+            background: var(--secondary-color);
+        }
+
+
+        .comments-list li>div:not(:first-child) {
+            /* This targets the deletion button div in comments-list for separation */
+            margin-left: auto;
+        }
+
+        .comments-list li {
+            word-wrap: break-word;
+            font-style: italic;
+            font-size: 0.9em;
+            /* Reset specific flex alignment for mobile text */
+            align-items: flex-start;
+        }
+
+        .dark-mode .comments-list li {
+            background: #3c3c5a;
+        }
+
+        /* New delete button for comments */
+        #delete-all-comments-btn {
+            background: var(--danger-color);
+            margin-top: 20px;
+            padding: 0.7rem 1.4rem;
+            border: none;
+            color: var(--light-text-color);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-weight: 600;
+            display: block;
+            /* Make it a block element on small screens */
+            width: 100%;
+            /* Full width on small screens */
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 600px) {
+            #delete-all-comments-btn {
+                width: auto;
+                display: inline-block;
+            }
+        }
+
+
+        #delete-all-comments-btn:hover {
+            background: #c0392b;
+        }
+
+
+        .footer {
+            background: var(--gradient-bg);
+            color: var(--light-text-color);
+            padding: 30px 5vw;
+            /* Use vw for mobile padding */
+            margin-top: 50px;
+            clear: both;
+            box-shadow: 0 -4px 12px var(--shadow-color);
+        }
+
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            /* Adjusted for better spacing */
+            align-items: flex-start;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-column {
+            flex: 1 1 180px;
+            /* Better flex for wrapping */
+            padding: 10px;
+            text-align: left;
+        }
+
+        .footer-column h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            border-bottom: 2px solid var(--light-text-color);
+            padding-bottom: 5px;
+        }
+
+        .footer-column p,
+        .footer-column a {
+            margin: 5px 0;
+            color: var(--light-text-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-column a:hover {
+            color: #f0f0f0;
+            text-decoration: underline;
+        }
+
+        .footer-copyright {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 0.9em;
+        }
+
+        /* Back to Top Button */
+        #back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            display: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 999;
+        }
+
+        #back-to-top:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            display: block;
+            /* Allows table to scroll on small screens */
+            overflow-x: auto;
+        }
+
+        /* Ensure table is not excessively large on small screens */
+        .history-table th,
+        .history-table td {
+            min-width: 120px;
+        }
+
+        .history-table th,
+        .history-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .history-table th {
+            background-color: var(--bg-color);
+            font-weight: 600;
+        }
+
+        .dark-mode .history-table th {
+            background-color: #3c3c5a;
+        }
+
+        .history-table tr:hover {
+            background-color: var(--bg-color);
+        }
+
+        .dark-mode .history-table tr:hover {
+            background-color: #4a4a6b;
+        }
+
+        /* Success Message Styling (Toast) */
+        #success-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #3498db;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            display: none;
+            /* Hidden by default */
+            transition: opacity 0.5s ease-in-out;
+            text-align: center;
+            max-width: 90vw;
+            /* Prevent overflow on very small screens */
+        }
+
+        /* New Styles for 100% Efficient Web Branding Notification (Fixed Bottom Banner) */
+        #branding-notification {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--secondary-color);
+            color: var(--light-text-color);
+            padding: 10px 0;
+            text-align: center;
+            font-size: 0.9em;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px var(--shadow-color);
+            animation: slideInUp 0.5s ease-out forwards;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+
+        /* New Styles for Client Request Form and Print View */
+        #content.client-request-page {
+            background-image: none !important;
+            /* Force removal of the background image */
+            background-color: var(--surface-color);
+            /* Matches the content card for a clean look */
+        }
+
+        .client-request-form {
+            background: var(--bg-color);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .dark-mode .client-request-form {
+            background: #2c2c4d;
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.05);
+        }
+
+        .client-request-form label {
+            display: block;
+            margin-top: 15px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .dark-mode .client-request-form label {
+            color: var(--light-text-color);
+        }
+
+        .client-request-form input[type="text"],
+        .client-request-form input[type="email"],
+        .client-request-form textarea,
+        .client-request-form select,
+        .client-request-form input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1em;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .client-request-form input[type="text"]:focus,
+        .client-request-form input[type="email"]:focus,
+        .client-request-form textarea:focus,
+        .client-request-form input[type="number"]:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 90, 156, 0.2);
+        }
+
+        .dark-mode .client-request-form input[type="text"],
+        .dark-mode .client-request-form input[type="email"],
+        .dark-mode .client-request-form textarea,
+        .dark-request-form input[type="number"] {
+            background: #3c3c5a;
+            color: var(--light-text-color);
+            border-color: #555;
+        }
+
+        .dark-mode .client-request-form input[type="text"]:focus,
+        .dark-mode .client-request-form input[type="email"]:focus,
+        .dark-mode .client-request-form textarea:focus,
+        .dark-mode .client-request-form input[type="number"]:focus {
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.4);
+        }
+
+        .client-request-form .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .client-request-form .checkbox-container input {
+            width: auto;
+            margin-right: 10px;
+            min-width: 20px;
+            min-height: 20px;
+        }
+
+        .client-request-form .form-actions {
+            display: flex;
+            flex-direction: column;
+            /* Stack buttons on mobile */
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        @media (min-width: 600px) {
+            .client-request-form .form-actions {
+                flex-direction: row;
+                /* Row layout on desktop */
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .client-request-form .form-actions button {
+            padding: 12px 25px;
+            border: none;
+            background: var(--primary-color);
+            color: var(--light-text-color);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease;
+            font-size: 1em;
+            font-weight: 600;
+            flex: 1;
+            /* Allow buttons to grow equally */
+        }
+
+        .client-request-form .form-actions button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        /* Ensure print button is green */
+        .client-request-form .print-btn {
+            background: #27ae60;
+        }
+
+        .client-request-form .print-btn:hover {
+            background: #2ecc71;
+        }
+
+        .print-summary {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-top: 20px;
+            line-height: 1.8;
+            background: var(--bg-color);
+            display: none;
+        }
+
+        .dark-mode .print-summary {
+            background: #3c3c5a;
+            border-color: #555;
+        }
+
+        .print-summary h3 {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 5px;
+            color: var(--primary-color);
+        }
+
+        .dark-mode .print-summary h3 {
+            border-bottom: 2px solid var(--light-text-color);
+            color: var(--light-text-color);
+        }
+
+        /* Styles for Print View */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            .print-summary,
+            .print-summary * {
+                visibility: visible;
+            }
+
+            .print-summary {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                border: none;
+                box-shadow: none;
+                background: none;
+                color: black;
+            }
+
+            .print-summary h3 {
+                border-bottom: 2px solid black;
+                color: black;
+            }
+
+            /* Hide print button when printing */
+            .print-btn,
+            .back-btn {
+                display: none !important;
+            }
+        }
+
+        /* --- Mobile Specific Overrides --- */
+        @media (max-width: 768px) {
+
+            .header {
+                padding: 10px 4vw;
+            }
+
+            /* Better mobile layout for the header actions */
+            .header>.open-btn {
+                order: -1;
+                /* Move open button to the far left */
+                margin-right: auto;
+            }
+
+            .logout-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9em;
+            }
+
+            /* Sidebar takes less width on mobile to avoid covering everything */
+            .sidebar {
+                padding-top: 10px;
+            }
+
+            .sidebar:not([style*="width: 0"]) {
+                width: 75vw !important;
+                /* Open to 75% of viewport width */
+            }
+
+            .content {
+                padding: 20px;
+                margin: 15px 4vw;
+            }
+
+            .card-section h2 {
+                font-size: 1.5em;
+            }
+
+            .card {
+                padding: 20px;
+                flex: 1 1 100%;
+                /* Ensure cards stack nicely on small screens */
+                max-width: 100%;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+
+            .footer-column {
+                text-align: center;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+                padding-bottom: 10px;
+            }
+
+            .footer-column:last-child {
+                border-bottom: none;
+            }
+
+            .history-table th,
+            .history-table td {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+
+            .client-request-form {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-controls">
+            <button class="open-btn">☰</button>
+        </div>
+        <a href="form.html" class="logout-btn">Logout</a>
+    </header>
+
+    <div id="success-message" style="display: none;"></div>
+
+    <div id="sidebar" class="sidebar">
+        <button class="close-btn">&times;</button>
+        <a href="#" data-page="home">🏠 Home</a>
+        <a href="#" data-page="documents">📁 Documents</a>
+        <a href="#" data-page="reports">📑 Reports</a>
+        <a href="#" data-page="history">📜 History</a>
+        <a href="#" data-page="comments">💬 Comments</a>
+        <a href="#" data-page="client-request">🚚 Client Request</a>
+        <a href="#" data-page="settings">⚙ Settings</a>
+    </div>
+
+    <div id="content" class="content">
+    </div>
+
+    <button onclick="scrollToTop()" id="back-to-top" title="Go to top">↑</button>
+
+    <div id="branding-notification">
+        🚀 100% Efficient Web Experience 🚀
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3>Contact Us</h3>
+                <p>Email: <a href="mailto:info@vanmotz.com">info@vanmotz.com</a></p>
+                <p>Phone: <a href="tel:+255222130505">+255 22 213 0505</a></p>
+            </div>
+            <div class="footer-column">
+                <h3>Address</h3>
+                <p><a href="https://www.vanmotz.com" target="_blank">www.vanmotz.com</a></p>
+                <p>P.O.Box 80698, Dar es Salaam</p>
+            </div>
+        </div>
+        <div class="footer-copyright">
+            &copy; Copyright Reserved. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        document.body.style.backgroundImage = "url('https://i.imgur.com/your-vanmo-truck-image.jpg')";
+
+        // --- Supabase Client Initialization ---
+        const SUPABASE_URL = "https://pzlvjwlhuvdavwobvufl.supabase.co";
+        // 🚨 REPLACE THIS KEY with your actual Public Anon Key
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bHZqd2xodXZkYXZ3b2J2dWZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5NDUxMTAsImV4cCI6MjA3NDUyMTExMH0.IbYMiAK0QxFVhPoG9VQabwnnEfQhpr1hBZZUCfJ41sk";
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        /** * 💡 CRITICAL: Get the logged-in client's ID.
+         * In a real application, you would check the session.
+         * For this example, we mock a user ID.
+         * The RLS policies rely on this value being the actual auth.uid()
+         */
+        let CURRENT_CLIENT_ID = null;
+
+        async function initializeClientIdentity() {
+            const {
+                data: {
+                    user
+                }
+            } = await supabase.auth.getUser();
+
+            if (user) {
+                CURRENT_CLIENT_ID = user.id;
+                console.log(`Authenticated as user: ${CURRENT_CLIENT_ID}`);
+                return true;
+            } else {
+                // FALLBACK MOCK: Used if no real session exists, but database calls will FAIL RLS!
+                // This value MUST match a user UUID in your Supabase auth.users table for RLS to testing.
+                CURRENT_CLIENT_ID = '00000000-0000-0000-0000-000000000001';
+                console.warn("No active Supabase session found. Using mock client ID.");
+                // 🛑 A real application would redirect to a login page here.
+                return false;
+            }
+        }
+        // --- END Supabase Client Initialization ---
+
+
+        const dummyReportsData = [{
+            id: '1',
+            name: 'MOCK: Shipping Report #1 (API Failed fallback)',
+            downloadUrl: '#'
+        }];
+
+        const elements = {
+            sidebar: document.getElementById('sidebar'),
+            openBtn: document.querySelector('.open-btn'),
+            closeBtn: document.querySelector('.close-btn'),
+            content: document.getElementById('content'),
+            backToTopBtn: document.getElementById('back-to-top'),
+            successMessage: document.getElementById('success-message')
+        };
+
+        let clientRequestData = {}; // Global variable to store form data temporarily
+
+        function toggleSidebar() {
+            // Updated sidebar width for better mobile experience
+            elements.sidebar.style.width = window.innerWidth <= 768 ? '75vw' : '250px';
+        }
+
+        function closeSidebar() {
+            elements.sidebar.style.width = '0';
+        }
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // --- Core Supabase Fetch/Delete Function ---
+
+        /**
+         * Deletes a single item from a Supabase table by ID.
+         * RLS policy on the table will ensure only the client's own rows are deleted.
+         * @param {string} tableName - The name of the table.
+         * @param {number} id - The ID of the row to delete.
+         */
+        async function deleteItem(tableName, id) {
+            const {
+                error
+            } = await supabase
+                .from(tableName)
+                .delete()
+                .eq('id', Number(id))
+                // 💡 We don't filter by client_id here, RLS handles that security
+                .select();
+
+            if (error) {
+                // Keep internal logging for development purposes, but simplify the thrown error
+                console.error(`Supabase DELETE failed for ${tableName} ID ${id}.`, error);
+                throw new Error(`Failed to delete item: ${error.message}`);
+            }
+
+            return true;
+        }
+
+
+        /**
+         * Handles the permanent deletion of a single comment by ID.
+         * @param {object} buttonElement - The button element that was clicked.
+         * @param {string} id - The ID of the comment to delete.
+         */
+        window.deleteComment = async function (buttonElement, id) {
+            if (!confirm('Are you sure you want to permanently delete this comment?')) return;
+
+            try {
+                await deleteItem('comments', Number(id));
+                const listItem = buttonElement.closest('li');
+                if (listItem) {
+                    listItem.remove();
+                }
+
+                elements.successMessage.textContent = 'Comment permanently deleted successfully.';
+                elements.successMessage.style.display = 'block';
+                setTimeout(() => {
+                    elements.successMessage.style.display = 'none';
+                }, 2000);
+
+            } catch (error) {
+                alert(`Comment deletion failed! Please try again later. Error: ${error.message}`);
+            }
+        };
+
+        /**
+         * Handles the bulk permanent deletion of selected items from a Supabase table.
+         * @param {string} tableName - The name of the table ('documents', 'reports', 'client_requests').
+         */
+        window.deleteSelectedItems = async function (tableName) {
+            let listId;
+            if (tableName === 'documents') {
+                listId = 'documents-list';
+            } else if (tableName === 'reports') {
+                listId = 'reports-list';
+            } else if (tableName === 'client_requests') {
+                listId = 'requests-list';
+            } else {
+                console.error('Invalid table name for bulk deletion:', tableName);
+                return;
+            }
+
+            const list = document.getElementById(listId);
+            if (!list) return;
+
+            const selectedCheckboxes = list.querySelectorAll('input[type="checkbox"]:checked');
+            const idsToDelete = Array.from(selectedCheckboxes).map(checkbox => checkbox.dataset.itemId);
+
+
+            if (idsToDelete.length === 0) {
+                alert(`Please select item(s) to delete from ${tableName}.`);
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to permanently delete ${idsToDelete.length} selected item(s) from ${tableName}? THIS ACTION CANNOT BE UNDONE.`)) {
+                return;
+            }
+
+            elements.successMessage.textContent = 'Permanently deleting selected items...';
+            elements.successMessage.style.display = 'block';
+
+            let successfulDeletes = 0;
+
+            for (const id of idsToDelete) {
+                try {
+                    const success = await deleteItem(tableName, Number(id));
+                    if (success) {
+                        successfulDeletes++;
+                        const checkbox = list.querySelector(`input[data-item-id="${id}"]`);
+                        if (checkbox) {
+                            const liToRemove = checkbox.closest('li');
+                            if (liToRemove) {
+                                liToRemove.remove();
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Failed to delete ID ${id}:`, error);
+                    alert(`Failed to delete item ${id}. Please check the console for details.`);
+                }
+            }
+
+            elements.successMessage.textContent = `${successfulDeletes} item(s) permanently deleted successfully from ${tableName}.`;
+            setTimeout(() => {
+                elements.successMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        window.deleteAllComments = async function () {
+            // Simplified confirm for a client-side simulated action
+            if (!confirm("Are you sure you want to clear all comments? (This action is client-side only)")) {
+                return;
+            }
+
+            elements.successMessage.textContent = 'Comments cleared successfully.';
+            elements.successMessage.style.display = 'block';
+            setTimeout(() => {
+                elements.successMessage.style.display = 'none';
+            }, 3000);
+
+            // Re-render to show empty list
+            renderCommentsPage(elements.content);
+        };
+
+        // --- Data Access Functions: UPDATED for RLS and Client Isolation ---
+
+        async function fetchData(tableName) {
+            if (!CURRENT_CLIENT_ID) return [];
+
+            try {
+                // 💡 CRITICAL: We only select rows that match the client's ID
+                const {
+                    data,
+                    error
+                } = await supabase
+                    .from(tableName)
+                    .select('*')
+                    .eq('client_id', CURRENT_CLIENT_ID); // Filter by the client ID
+
+                if (error) {
+                    console.error(`Supabase API failed for table ${tableName}:`, error);
+                    // Simplified thrown error
+                    throw new Error(`Failed to fetch data: ${error.message}.`);
+                }
+
+                return data || [];
+
+            } catch (error) {
+                console.error(`Fetch error for ${tableName}:`, error);
+                if (tableName === 'reports') return dummyReportsData;
+                return [];
+            }
+        }
+
+        window.saveComment = async function (commentText) {
+            if (!CURRENT_CLIENT_ID) throw new Error("Client ID not available. Authentication required.");
+
+            const payload = {
+                text: commentText,
+                timestamp: new Date().toISOString(),
+                // 💡 CRITICAL: MUST include client_id for RLS check
+                client_id: CURRENT_CLIENT_ID
+            };
+
+            const {
+                error
+            } = await supabase
+                .from('comments')
+                .insert([payload]);
+
+            if (error) {
+                console.error("Supabase Comment Save Error:", error);
+                throw new Error(`Failed to save comment.`);
+            }
+        };
+
+        window.loadComments = async function () {
+            if (!CURRENT_CLIENT_ID) return [];
+
+            try {
+                // 💡 CRITICAL: We only select rows that match the client's ID
+                const {
+                    data,
+                    error
+                } = await supabase
+                    .from('comments')
+                    .select('id,text,timestamp')
+                    .eq('client_id', CURRENT_CLIENT_ID) // Filter by the client ID
+                    .order('timestamp', {
+                        ascending: false
+                    });
+
+                if (error) {
+                    console.error("Supabase Comment Load Error:", error);
+                    // Simplified thrown error
+                    throw new Error(`Failed to load comments: ${error.message}.`);
+                }
+
+                return data;
+            } catch (e) {
+                console.error("Error loading comments:", e);
+                throw e;
+            }
+        };
+
+        window.saveClientRequest = async function (requestData) {
+            if (!CURRENT_CLIENT_ID) throw new Error("Client ID not available. Authentication required.");
+
+            // Map hyphenated form keys to clean snake_case SQL column names
+            const cleanedPayload = {
+                client_name: requestData['client-name'],
+                client_email: requestData['client-email'],
+                goods_type: requestData['goods-type'],
+                origin_area: requestData['origin-area'],
+                destination_area: requestData['destination-area'],
+                trucks_needed: requestData['trucks-needed'],
+                unsure_trucks: requestData['unsure-trucks'],
+                timestamp: new Date().toISOString(),
+                // 💡 CRITICAL: MUST include client_id for RLS check
+                client_id: CURRENT_CLIENT_ID
+            };
+
+            const {
+                error
+            } = await supabase
+                .from('client_requests')
+                .insert([cleanedPayload]);
+
+            if (error) {
+                console.error("Supabase Request Save Error:", error);
+                throw new Error(`Failed to save client request.`);
+            }
+        };
+
+        // --- All render functions (renderHomePage, renderDocumentsPage, etc.) are here ---
+        // ... (remaining unchanged render functions from the original file) ...
+
+
+        function renderHomePage(container) {
+            container.innerHTML = `
+                <h2>Welcome, Client! 👋</h2>
+                <p>Use the menu to navigate through your account.</p>
+                <div class="card-section">
+                    <h2>Our Core Strengths</h2>
+                    <div class="card-container">
+                        <div class="card">
+                            <h3>1. A Trusted Business Partner</h3>
+                            <p>We've built a strong reputation by consistently delivering reliable and secure solutions to our clients. Our unwavering commitment to excellence is what earns us trust and confidence across various industries. Your success is our mission.</p>
+                        </div>
+                        <div class="card">
+                            <h3>2. Extensive Regional Reach</h3>
+                            <p>Operating from Dar es Salaam, we are a key logistics hub for Eastern and Central Africa. With a powerful fleet of over 100 trucks, we handle cross-border transport efficiently, linking businesses to critical markets in countries like Zambia, DR Congo, Rwanda, and Uganda. We make regional trade seamless.</p>
+                        </div>
+                        <div class="card">
+                            <h3>3. An Experienced and Dedicated Team</h3>
+                            <p>Our greatest asset is our team of highly skilled professionals. From expert drivers to logistics specialists, we're all dedicated to providing exceptional service. Their collective knowledge helps us solve complex logistical challenges and guarantees the secure, timely delivery of your goods, providing you with total peace of mind.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function renderDocumentsPage(container) {
+            container.innerHTML = `
+                <button class="back-btn" onclick="resetHome()">← Back</button>
+                <h2>📁 Project Documents</h2>
+                <p>Here you can find all important project documents. Select item(s) below and click the red button to **permanently delete**.</p>
+                <div class="loader"></div>
+            `;
+            const documents = await fetchData('documents');
+            let fileListHTML = '<ul class="file-list" id="documents-list">';
+            if (documents.length === 0) {
+                fileListHTML += '<li>No documents found.</li>';
+            } else {
+                documents.forEach(doc => {
+                    fileListHTML += `
+                        <li>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" data-item-id="${doc.id}" style="width: auto;">
+                                <span>${doc.name}</span>
+                            </div>
+                            <div>
+                                <a href="${doc.downloadUrl}" class="download-btn" download>Download</a>
+                            </div>
+                        </li>
+                    `;
+                });
+            }
+            fileListHTML += '</ul>';
+            container.innerHTML = `
+                <button class="back-btn" onclick="resetHome()">← Back</button>
+                <h2>📁 Project Documents</h2>
+                <p>Here you can find all important project documents. Select item(s) below and click the red button to **permanently delete**.</p>
+                ${fileListHTML}
+                <button class="delete-selected-btn" onclick="deleteSelectedItems('documents')">Permanently Delete Selected Documents</button>
+            `;
+        }
+
+        async function renderReportsPage(container) {
+            container.innerHTML = `
+                <button class="back-btn" onclick="resetHome()">← Back</button>
+                <h2>📑 Financial Reports</h2>
+                <p>Download the latest financial reports. Select item(s) below and click the red button to **permanently delete**.</p>
+                <div class="loader"></div>
+            `;
+            const reports = await fetchData('reports');
+            let fileListHTML = '<ul class="file-list" id="reports-list">';
+            if (reports.length === 0) {
+                fileListHTML += '<li>No reports found.</li>';
+            } else {
+                reports.forEach(report => {
+                    fileListHTML += `
+                        <li>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" data-item-id="${report.id}" style="width: auto;">
+                                <span>${report.name}</span>
+                            </div>
+                            <div>
+                                <a href="${report.downloadUrl}" class="download-btn" download>Download</a>
+                            </div>
+                        </li>
+                    `;
+                });
+            }
+            fileListHTML += '</ul>';
+            container.innerHTML = `
+                <button class="back-btn" onclick="resetHome()">← Back</button>
+                <h2>📑 Financial Reports</h2>
+                <p>Download the latest financial reports. Select item(s) below and click the red button to **permanently delete**.</p>
+                ${fileListHTML}
+                <button class="delete-selected-btn" onclick="deleteSelectedItems('reports')">Permanently Delete Selected Reports</button>
+            `;
+        }
+
+        async function renderHistoryPage(container) {
+            container.innerHTML = `
+                <button class="back-btn" onclick="resetHome()">← Back</button>
+                <h2>📜 Download History</h2>
+                <p>A record of your downloaded files.</p>
+                <div class="loader"></div>
+            `;
+            const history = JSON.parse(localStorage.getItem('downloadHistory')) || [];
+            let historyTableHTML = '<table class="history-table"><thead><tr><th>File</th><th>Date</th></tr></thead><tbody>';
+            if (history.length === 0) {
+                historyTableHTML += '<tr><td colspan="2">No downloads recorded.</td></tr>';
+            } else {
+                history.forEach(item => {
+                    historyTableHTML += `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${new Date(item.date).toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+            }
+            historyTableHTML += '</tbody></table>';
+            container.innerHTML = `
+                <button class="back-btn" onclick="resetHome()">← Back</button>
+                <h2>📜 Download History</h2>
+                <p>A record of your downloaded files.</p>
+                ${historyTableHTML}
+                <button class="back-btn" id="clear-history-btn">Clear History (Local Only)</button>
+            `;
+
+            document.getElementById('clear-history-btn').addEventListener('click', () => {
+                localStorage.removeItem('downloadHistory');
+                alert('Download history cleared.');
+                renderHistoryPage(container);
+            });
+        }
+
+        async function renderCommentsPage(container) {
+            let comments = [];
+            try {
+                comments = await window.loadComments();
+            } catch (e) {
+                console.error(e);
+                comments = [{
+                    id: -1,
+                    text: `Error loading comments: ${e.message}`,
+                    timestamp: new Date().toISOString()
+                }]; // Show the error in the list
+            }
+
+            let commentsHTML = '<ul class="comments-list" id="comments-list">';
+            if (comments.length === 0) {
+                commentsHTML += '<li>No comments yet.</li>';
+            } else {
+                comments.forEach(comment => {
+                    const commentId = comment.id || -1;
+                    commentsHTML += `
+                        <li style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p>${comment.text}</p>
+                                <small>Submitted: ${new Date(comment.timestamp).toLocaleString()}</small>
+                            </div>
+                            ${commentId !== -1 ? `<button class="delete-btn" onclick="deleteComment(this, ${commentId})">Delete</button>` : ''}
+                        </li>
+                    `;
+                });
+            }
+            commentsHTML += '</ul>';
+
+            container.innerHTML = `
+                <button class="back-btn" onclick="resetHome()">← Back</button>
+                <h2>💬 Comments & Requests</h2>
+                <p>Please use the form below to leave us a message. You can **permanently delete** individual comments using the red button next to them.</p>
+
+                <form class="comment-form" id="feedback-form">
+                    <textarea id="feedback-text" placeholder="Type your comment here..." required></textarea>
+                    <button type="submit">Submit Comment</button>
+                </form>
+
+                <h3>Recent Comments (Your Own)</h3>
+                <div id="comments-section">
+                    ${commentsHTML}
+                </div>
+
+                <button id="delete-all-comments-btn" class="delete-selected-btn">Clear All Comments</button>
+            `;
+            container.querySelector('#feedback-form').addEventListener('submit', submitFeedback);
+            container.querySelector('#delete-all-comments-btn').addEventListener('click', deleteAllComments);
+        }
+
+        async function submitFeedback(event) {
+            event.preventDefault();
+            const text = document.getElementById('feedback-text').value;
+
+            if (!text.trim()) {
+                alert('Please enter a comment before submitting.');
+                return;
+            }
+            if (!CURRENT_CLIENT_ID) {
+                alert('Authentication required to submit a comment.');
+                return;
+            }
+
+            try {
+                await window.saveComment(text);
+
+                elements.successMessage.textContent = `Your comment has been submitted successfully!`;
+                elements.successMessage.style.display = 'block';
+                setTimeout(() => {
+                    elements.successMessage.style.display = 'none';
+                }, 2000);
+
+                document.getElementById('feedback-text').value = '';
+
+                renderCommentsPage(elements.content);
+
+            } catch (error) {
+                alert(`An error occurred during submission. Please try again.`);
+                console.error('Submission failed:', error);
+            }
+        }
+
+        function renderClientRequestPage(container) {
+            container.innerHTML = `
+                <button class="back-btn" onclick="resetHome()">← Back</button>
+                <h2>🚚 Client Request</h2>
+                <p>Please fill out the form below to submit a transportation request. We will get back to you as soon as possible with a quote.</p>
+                <form class="client-request-form" id="client-request-form">
+                    <label for="client-name">Your Full Name</label>
+                    <input type="text" id="client-name" name="client-name" placeholder="John Doe" required>
+
+                    <label for="client-email">Email Address</label>
+                    <input type="email" id="client-email" name="client-email" placeholder="john.doe@example.com" required>
+
+                    <label for="goods-type">Types of Goods to Transit</label>
+                    <input type="text" id="goods-type" name="goods-type" placeholder="e.g., Cement, Machinery, Raw Materials" required>
+
+                    <label for="origin-area">Origin Area</label>
+                    <input type="text" id="origin-area" name="origin-area" placeholder="e.g., Dar es Salaam, Tanzania" required>
+
+                    <label for="destination-area">Destination Area</label>
+                    <input type="text" id="destination-area" name="destination-area" placeholder="e.g., Lubumbashi, DR Congo" required>
+
+                    <label for="trucks-needed">Amount of Trucks Needed</label>
+                    <input type="number" id="trucks-needed" name="trucks-needed" min="1" placeholder="e.g., 5">
+
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="unsure-trucks" name="unsure-trucks">
+                        <label for="unsure-trucks">I'm not sure, please advise</label>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit">Submit Request</button>
+                        <button type="button" class="print-btn" onclick="printRequest()" style="display: none;">Print Request</button>
+                    </div>
+                </form>
+
+                `;
+
+            document.getElementById('client-request-form').addEventListener('submit', submitClientRequest);
+            document.getElementById('unsure-trucks').addEventListener('change', toggleTrucksInput);
+        }
+
+        function toggleTrucksInput(event) {
+            const trucksInput = document.getElementById('trucks-needed');
+            if (event.target.checked) {
+                trucksInput.removeAttribute('required');
+                trucksInput.disabled = true;
+                trucksInput.value = '';
+            } else {
+                trucksInput.setAttribute('required', 'required');
+                trucksInput.disabled = false;
+            }
+        }
+
+        async function submitClientRequest(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            const unsure = formData.get('unsure-trucks') === 'on';
+
+            if (!unsure && (!formData.get('trucks-needed') || parseInt(formData.get('trucks-needed')) < 1)) {
+                alert('Please enter a valid number of trucks or select "I\'m not sure".');
+                return;
+            }
+            if (!CURRENT_CLIENT_ID) {
+                alert('Authentication required to submit a request.');
+                return;
+            }
+
+            const dataObj = Object.fromEntries(formData.entries());
+
+            // CRITICAL TYPE CLEANING FOR DATABASE:
+            dataObj['unsure-trucks'] = unsure;
+
+            const trucksValue = formData.get('trucks-needed');
+            dataObj['trucks-needed'] = unsure ? null : (trucksValue ? parseInt(trucksValue) : null);
+
+            try {
+                await window.saveClientRequest(dataObj);
+                console.log('Successfully sent client request to Supabase:', dataObj);
+
+                // Prepare data for local display/summary
+                const localDisplayData = {
+                    ...dataObj
+                };
+                if (localDisplayData['trucks-needed'] === null) {
+                    localDisplayData['trucks-needed'] = 'Unsure';
+                }
+                clientRequestData = localDisplayData;
+
+            } catch (err) {
+                alert('An error occurred during submission. Please check the console (F12) for details.');
+                console.error('Submission failed:', err);
+                return;
+            }
+
+            elements.successMessage.textContent = 'Your request has been sent successfully!';
+            elements.successMessage.style.display = 'block';
+
+            displayPrintableSummary();
+
+            setTimeout(() => {
+                elements.successMessage.style.display = 'none';
+            }, 2000);
+
+            form.reset();
+        }
+
+
+        function displayPrintableSummary() {
+            const formContainer = document.getElementById('client-request-form');
+            if (formContainer) {
+                formContainer.style.display = 'none';
+            }
+
+            // Remove any existing summary before adding a new one
+            const existingSummary = elements.content.querySelector('.print-summary');
+            if (existingSummary) {
+                existingSummary.remove();
+            }
+
+            let summaryHTML = `
+                <div class="print-summary">
+                    <h3>Client Request Summary</h3>
+                    <p><strong>Full Name:</strong> ${clientRequestData['client-name'] || 'N/A'}</p>
+                    <p><strong>Email:</strong> ${clientRequestData['client-email'] || 'N/A'}</p>
+                    <p><strong>Types of Goods:</strong> ${clientRequestData['goods-type'] || 'N/A'}</p>
+                    <p><strong>Origin Area:</strong> ${clientRequestData['origin-area'] || 'N/A'}</p>
+                    <p><strong>Destination Area:</strong> ${clientRequestData['destination-area'] || 'N/A'}</p>
+                    <p><strong>Trucks Needed:</strong> ${clientRequestData['trucks-needed'] || 'Unsure'}</p>
+                    <small>Printed: ${new Date().toLocaleString()}</small>
+                </div>
+            `;
+
+
+            const h2 = elements.content.querySelector('h2');
+            h2.insertAdjacentHTML('afterend', summaryHTML);
+
+            document.querySelector('.print-summary').style.display = 'block';
+
+            // Show the print button in the form actions
+            const printButton = document.querySelector('.client-request-form .print-btn');
+            const submitButton = document.querySelector('.client-request-form button[type="submit"]');
+
+            if (printButton) {
+                printButton.style.display = 'inline-block';
+            }
+            if (submitButton) {
+                submitButton.style.display = 'none';
+            }
+        }
+
+        function printRequest() {
+            // Function directly calls the browser's print dialog
+            window.print();
+        }
+
+        function renderSettingsPage(container) {
+            container.innerHTML = `
+                <button class="back-btn" onclick="resetHome()">← Back</button>
+                <h2>⚙ Settings</h2>
+                <div class="content-section">
+                    <h3>Theme Settings</h3>
+                    <div class="theme-options">
+                        <span>Dark Mode</span>
+                        <label class="theme-toggle-switch">
+                            <input type="checkbox" id="theme-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            `;
+
+            const themeToggle = document.getElementById('theme-toggle');
+            themeToggle.checked = localStorage.getItem('theme') === 'dark';
+            document.body.classList.toggle('dark-mode', themeToggle.checked);
+
+            themeToggle.addEventListener('change', (event) => {
+                if (event.target.checked) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        }
+
+        // --- Main Controller and Event Handlers ---
+
+        function showFeature(page) {
+            closeSidebar();
+            elements.content.classList.remove('fadeIn');
+            elements.content.style.opacity = '0';
+
+            if (page === 'client-request') {
+                elements.content.classList.add('client-request-page');
+            } else {
+                elements.content.classList.remove('client-request-page');
+            }
+
+            setTimeout(() => {
+                switch (page) {
+                    case 'home':
+                        renderHomePage(elements.content);
+                        break;
+                    case 'documents':
+                        renderDocumentsPage(elements.content);
+                        break;
+                    case 'reports':
+                        renderReportsPage(elements.content);
+                        break;
+                    case 'history':
+                        renderHistoryPage(elements.content);
+                        break;
+                    case 'comments':
+                        renderCommentsPage(elements.content);
+                        break;
+                    case 'client-request':
+                        renderClientRequestPage(elements.content);
+                        break;
+                    case 'settings':
+                        renderSettingsPage(elements.content);
+                        break;
+                    default:
+                        renderHomePage(elements.content);
+                        break;
+                }
+                elements.content.classList.add('fadeIn');
+            }, 300);
+        }
+
+        function resetHome() {
+            showFeature('home');
+        }
+
+        function handleScroll() {
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                elements.backToTopBtn.style.display = 'block';
+            } else {
+                elements.backToTopBtn.style.display = 'none';
+            }
+        }
+
+
+        // --- Event Listeners and Initialization ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 💡 CRITICAL: Initialize identity before trying to load data
+            await initializeClientIdentity();
+
+            // Load theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+
+            resetHome();
+            elements.openBtn.addEventListener('click', toggleSidebar);
+            elements.closeBtn.addEventListener('click', closeSidebar);
+            window.addEventListener('scroll', handleScroll);
+
+            // Recalculate sidebar width on window resize
+            window.addEventListener('resize', () => {
+                // Only adjust if the sidebar is currently open
+                if (elements.sidebar.style.width !== '0px') {
+                    toggleSidebar();
+                }
+            });
+
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const page = event.target.dataset.page;
+                    if (page) {
+                        showFeature(page);
+                    }
+                });
+            });
+        });
+    </script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Account</title>
+    <script type="module">
+        // 1. IMPORT SUPABASE
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        
+        // 2. SUPABASE CONFIGURATION (Kuanzisha Mteja wa Supabase)
+        const SUPABASE_URL = "https://pzlvjwlhuvdavwobvufl.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bHZqd2xodXZkYXZ3b2J2dWZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5NDUxMTAsImV4cCI6MjA3NDUyMTExMH0.IbYMiAK0QxFVhPoG9VQabwnnEfQhpr1hBZZUCfJ41sk";
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // --- DOM and utility functions ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const showRegisterBtn = document.getElementById('show-register');
+            const showLoginBtn = document.getElementById('show-login');
+            const formMessage = document.getElementById('form-message');
+            const forgotPasswordLink = document.getElementById('forgot-password');
+
+            const showMessage = (message, isError = false) => {
+                formMessage.textContent = message;
+                formMessage.classList.toggle('text-red-500', isError);
+                formMessage.classList.toggle('text-green-500', !isError);
+                
+                // MANTIKI MPYA: Weka kiungo cha kuanzisha tena uthibitisho
+                if (isError && message.includes('Email not confirmed')) {
+                    formMessage.innerHTML = `${message}. <button id="resend-confirm" class="font-medium text-blue-600 hover:text-blue-500 underline ml-2">Tuma upya uthibitisho wa barua pepe.</button>`;
+                }
+                
+                // Weka muda wa kufuta ujumbe
+                setTimeout(() => {
+                    // Futa ujumbe, lakini sio mara moja kama kuna kiungo cha kutuma upya (resend link)
+                    if (!document.getElementById('resend-confirm')) {
+                        formMessage.textContent = '';
+                    }
+                }, 8000); // Muda mrefu wa kutosha kwa mtumiaji kusoma
+            };
+
+            const toggleForms = () => {
+                loginForm.classList.toggle('hidden-form');
+                registerForm.classList.toggle('hidden-form');
+            };
+
+            showRegisterBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                showMessage('', false); // Futa ujumbe
+                toggleForms();
+            });
+
+            showLoginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                showMessage('', false); // Futa ujumbe
+                toggleForms();
+            });
+
+            forgotPasswordLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showMessage('Please contact support to reset your password.', false);
+            });
+
+            // --- Supabase Login Logic (Mantiki ya Kuingia) ---
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = e.target['email'].value;
+                const password = e.target['password'].value;
+                
+                showMessage('Logging in...', false); // Ujumbe wa kupakia
+
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    showMessage(`Login failed: ${error.message}`, true);
+                    console.error("Login Error:", error.message);
+                } else if (data.user) {
+                    showMessage('Login successful! Redirecting...', false);
+                    // Redirect to home.html on successful login
+                    window.location.href = 'home.html';
+                } else {
+                    showMessage('Login attempt completed, but no user data received. Check console for details.', true);
+                    console.error("Login Error: No user data returned.", data);
+                }
+            });
+            
+            // --- Supabase Resend Confirmation Logic (Mantiki ya kutuma upya uthibitisho) ---
+            formMessage.addEventListener('click', async (e) => {
+                if (e.target.id === 'resend-confirm') {
+                    // Chukua barua pepe kutoka kwenye sehemu ya kuingia
+                    const emailInput = document.getElementById('login-email').value;
+                    if (!emailInput) {
+                        showMessage('Tafadhali ingiza barua pepe yako kwenye sehemu ya kuingia (Email field) kwanza.', true);
+                        return;
+                    }
+
+                    showMessage('Inatuma upya barua pepe...', false);
+                    e.target.disabled = true; // Lemaza kitufe
+
+                    // Tumia Supabase method kutuma upya barua pepe
+                    const { error } = await supabase.auth.resend({
+                        type: 'signup',
+                        email: emailInput
+                    });
+
+                    if (error) {
+                        showMessage(`Kushindwa kutuma: ${error.message}`, true);
+                        e.target.disabled = false;
+                        console.error("Resend Error:", error.message);
+                    } else {
+                        showMessage('Barua pepe mpya ya uthibitisho imetumwa. Angalia inbox/spam yako.', false);
+                        // Ondoa kitufe baada ya kufaulu
+                        setTimeout(() => {
+                             formMessage.textContent = '';
+                        }, 5000);
+                    }
+                }
+            });
+            
+
+            // --- Supabase Registration Logic (Mantiki ya Usajili) ---
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const firstName = e.target['firstName'].value;
+                const lastName = e.target['lastName'].value;
+                const phone = e.target['phone'].value; 
+                const email = e.target['email'].value;
+                const password = e.target['password'].value;
+                const confirmPassword = e.target['confirm-password'].value;
+
+                if (password !== confirmPassword) {
+                    showMessage('Passwords do not match.', true);
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showMessage('Password must be at least 6 characters long.', true);
+                    return;
+                }
+                
+                showMessage('Registering user...', false); // Ujumbe wa kupakia
+
+                // Supabase registration (Usajili wa Supabase)
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            first_name: firstName,
+                            last_name: lastName,
+                            phone_number: phone // Hifadhi namba ya simu kama metadata
+                        }
+                    }
+                });
+
+                if (error) {
+                    showMessage(`Registration failed: ${error.message}`, true);
+                    console.error("Registration Error:", error.message);
+                } else if (data.user) {
+                    // Supabase inatuma barua pepe ya uthibitisho kwa default
+                    showMessage('Registration successful! Check your email to confirm your account, then log in.', false);
+                    
+                    // Clear form fields (Futa sehemu za fomu)
+                    e.target.reset();
+                    toggleForms(); // Rudi kwenye fomu ya kuingia
+                } else {
+                    // Hii hutokea wakati barua pepe ya uthibitisho inatumwa.
+                    showMessage('Registration initiated. Check your email for confirmation.', false);
+                    e.target.reset();
+                    toggleForms();
+                }
+            });
+        });
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .form-container {
+            transition: all 0.5s ease-in-out;
+            transform-origin: center;
+        }
+        .hidden-form {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-blue-600 flex items-center justify-center min-h-screen p-4">
+
+    <div class="form-container w-full max-w-sm p-8 space-y-6 bg-white rounded-xl shadow-2xl">
+
+        <h1 id="form-heading" class="text-3xl font-bold text-center text-blue-800">Client Account</h1>
+        <p id="form-message" class="text-sm text-center min-h-[20px]"></p>
+
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="login-email" name="email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+            </div>
+            <div>
+                <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="login-password" name="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+            </div>
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                Log In
+            </button>
+            <p class="mt-4 text-center text-sm text-gray-600">
+                <a href="#" id="forgot-password" class="font-medium text-blue-600 hover:text-blue-500">Forgot password?</a>
+            </p>
+            <p class="mt-4 text-center text-sm text-gray-600">
+                Don't have an account? <a href="#" id="show-register" class="font-medium text-blue-600 hover:text-blue-500">Register here</a>.
+            </p>
+        </form>
+
+        <form id="register-form" class="space-y-4 hidden-form">
+            <div>
+                <label for="register-first-name" class="block text-sm font-medium text-gray-700">First Name</label>
+                <input type="text" id="register-first-name" name="firstName" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+            </div>
+            <div>
+                <label for="register-last-name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                <input type="text" id="register-last-name" name="lastName" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+            </div>
+            <!-- NEW FIELD: Phone Number Input -->
+            <div>
+                <label for="register-phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input 
+                    type="tel" 
+                    id="register-phone" 
+                    name="phone" 
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                    required
+                >
+            </div>
+            <!-- END NEW FIELD -->
+            <div>
+                <label for="register-email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="register-email" name="email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+            </div>
+            <div>
+                <label for="register-password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="register-password" name="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+            </div>
+            <div>
+                <label for="confirm-password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                <input type="password" id="confirm-password" name="confirm-password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+            </div>
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                Register
+            </button>
+            <p class="mt-4 text-center text-sm text-gray-600">
+                Already have an account? <a href="#" id="show-login" class="font-medium text-blue-600 hover:text-blue-500">Log in here</a>.
+            </p>
+        </form>
+    </div>
+</body>
+</html>
